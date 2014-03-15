@@ -48,3 +48,17 @@ A Perl script that uses perl-modules/Graph to generate PNG images visualizing th
 <p align="center">
   <img src="https://raw.github.com/cswagner/bioinformatics-internship/master/methylation/results/top-10/methylation_data_minedge_filter_all_10_.png" alt="Sample Methylation Output" width=640 height=715/>
 </p>
+
+### motifs
+---
+
+##### motifs.pl
+
+A Perl script that uses perl-modules/Graph to visualize DNA word clusters (motifs) identified in *[Regulatory Network Nodes of Check Point Factors in DNA Repair Pathways](http://dl.acm.org/citation.cfm?id=1854877 "Publication Link")*.
+
+##### motifs.png
+
+The resulting visualization:
+<p align="center">
+  <img src="https://raw.github.com/cswagner/bioinformatics-internship/master/motifs/motifs.png" alt="Motifs Visualization" width=710 height=1180/>
+</p>
