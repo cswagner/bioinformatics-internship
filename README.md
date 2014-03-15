@@ -36,3 +36,15 @@ edge:
 	color:  rgb(0, 0, 0)
 	dashed: false
 ```
+
+### methylation
+---
+
+##### methylation_visualizer.pl
+
+A Perl script that uses perl-modules/Graph to generate PNG images visualizing the relationships between cancerous and normal ovarian cells. The input data has been redacted as it is not mine to distribute, but a few sample result images have been included in methylation/results.
+
+*Ex.*
+<p align="center">
+  <img src="https://raw.github.com/cswagner/bioinformatics-internship/master/methylation/results/methylation_data_minedge_filter_all_10_.png" alt="Sample Methylation Output" width=640 height=715/>
+</p>
