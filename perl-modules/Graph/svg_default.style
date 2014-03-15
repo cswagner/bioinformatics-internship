@@ -1,0 +1,13 @@
+set:
+	name:			    default
+	node-fill:			rgb(255, 0, 0)
+	node-alpha:		    0.1
+	node-stroke-color:	rgb(0, 0, 0)
+	node-stroke-width:	1
+	node-radius:		10
+
+edge:
+	name:		default
+	color:		rgb(0, 0, 0)
+	dashed:		false
+	
