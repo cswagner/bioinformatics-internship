@@ -37,6 +37,8 @@ edge:
 	dashed: false
 ```
 
+I developed this module towards the end of my internship so I did not have a chance to run the cell methylation data or motif data through it, however, a usage example script and a couple sample SVG output images are included in ./svg.
+
 ### methylation
 ---
 
