@@ -46,5 +46,5 @@ A Perl script that uses perl-modules/Graph to generate PNG images visualizing th
 
 *Ex.*
 <p align="center">
-  <img src="https://raw.github.com/cswagner/bioinformatics-internship/master/methylation/results/methylation_data_minedge_filter_all_10_.png" alt="Sample Methylation Output" width=640 height=715/>
+  <img src="https://raw.github.com/cswagner/bioinformatics-internship/master/methylation/results/top-10/methylation_data_minedge_filter_all_10_.png" alt="Sample Methylation Output" width=640 height=715/>
 </p>
