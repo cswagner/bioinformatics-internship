@@ -1,0 +1,26 @@
+set:
+	name:              node1
+	node-fill:         rgb(255, 0, 0)
+	node-stroke-color: rgb(0, 0, 0)
+	node-stroke-width: 1
+	node-radius:       10
+	
+set:
+	name:              node2
+	node-fill:         rgb(0, 255, 0)
+	node-stroke-color: rgb(0, 0, 0)
+	node-stroke-width: 1
+	node-radius:       5
+
+edge:
+	name:  hyper
+	color: rgb(255, 0, 0)
+	
+edge:
+	name:  hypo
+	color: rgb(0, 0, 255)
+	
+edge:
+	name:  super
+	color: rgb(0, 255, 0)
+	

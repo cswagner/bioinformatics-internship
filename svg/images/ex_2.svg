@@ -1,0 +1,1245 @@
+<?xml version="1.0" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" 
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="470" height="470"
+	id = "myimage">
+	
+	<defs>
+		<radialGradient id = "bg_circle_fill" cx = "50%" cy = "50%" r = "50%" fx = "50%" fy = "50%">
+			<stop stop-color = "rgb(255, 255, 255)" offset = "0%" />
+			<stop stop-color = "rgb(225, 225, 225)" offset = "90%" />
+			<stop stop-color = "rgb(100, 100, 100)" offset = "100%" />
+		</radialGradient>
+		<filter id = "node_blur">
+			<feGaussianBlur stdDeviation="2" />
+		</filter>
+	</defs>
+	
+	<script type = "text/javascript"><![CDATA[
+		var legend_open = false;
+		var legend_items_position = 0;
+		var current_node = null;
+		var edges_info = new Array();
+		var info_box_edge_cursor = 0;
+	
+		function node_onmouseover(evt) {
+			var node_group = document.getElementById("nodes");
+			var node = evt.target;
+			var node_id = node.getAttribute("id");
+			var node_id_vals = node_id.split(" ");
+			var nodes = node_group.getElementsByTagName("circle");
+			var edges = node_group.getElementsByTagName("polyline");
+			var end_nodes = new Array();
+			
+			for(var k = 0; k < edges.length; ++k) {
+				var node_edges = edges[k].getAttribute("desc");
+				var node_edges_vals = node_edges.split(" ");
+				
+				if(node_edges_vals[2] == node_id_vals[0]) {
+					if(node_edges_vals[3] == node_id_vals[1]) {
+						var end_node = new Array();
+						end_node[0] = node_edges_vals[0];
+						end_node[1] = node_edges_vals[1];
+						end_nodes.push(end_node);
+					}else {
+						edges[k].setAttribute("filter", "url(#node_blur)");
+						edges[k].setAttribute("opacity", .25);
+					}
+				}else if(node_edges_vals[0] == node_id_vals[0]) {
+					if(node_edges_vals[1] == node_id_vals[1]) {
+						var end_node = new Array();
+						end_node[0] = node_edges_vals[2];
+						end_node[1] = node_edges_vals[3];
+						end_nodes.push(end_node);
+					}else {
+						edges[k].setAttribute("filter", "url(#node_blur)");
+						edges[k].setAttribute("opacity", .25);
+					}
+				}else {
+					edges[k].setAttribute("filter", "url(#node_blur)");
+					edges[k].setAttribute("opacity", .25);
+				}
+			}
+
+			var selected = false;
+			for(var i = 0; i < nodes.length; ++i) {
+				selected = false;
+				if(nodes[i] === node) {
+					selected = true;
+				}else {
+					var current_node_id = nodes[i].getAttribute("id");
+					var current_node_id_vals = current_node_id.split(" ");
+					var current_node_set = current_node_id_vals[0];
+					var current_node_num = current_node_id_vals[1];
+					for(var j = 0; j < end_nodes.length; ++j) {
+						var end_node_set = end_nodes[j][0];
+						var end_node_num = end_nodes[j][1];
+						if(current_node_num === end_node_num && current_node_set === end_node_set) {
+							selected = true;
+						}
+					}
+					if(!selected) {
+						nodes[i].setAttribute("filter", "url(#node_blur)");
+						nodes[i].setAttribute("opacity", .25);
+					}
+				}
+			}
+		}
+		function node_onmouseout(evt) {
+			var node_group = document.getElementById("nodes");
+			var node = evt.target;
+			var nodes = node_group.getElementsByTagName("circle");
+			var edges = node_group.getElementsByTagName("polyline");
+			
+			for(var i = 0; i < nodes.length; ++i) {
+				if(nodes[i] !== node) {
+					nodes[i].setAttribute("filter","");
+					nodes[i].setAttribute("opacity", 1);
+				}
+			}
+			
+			for(var k = 0; k < edges.length; ++k) {
+				edges[k].setAttribute("filter", "");
+				edges[k].setAttribute("opacity", 1);
+			}
+		}
+		function node_onmouseclick(evt) {
+			var node_group = document.getElementById("nodes");
+			var node = evt.target;
+			var node_id = node.getAttribute("id");
+			var node_id_vals = node_id.split(" ");
+			var node_name = node.getAttribute("desc");
+			var nodes = node_group.getElementsByTagName("circle");
+			var edges = node_group.getElementsByTagName("polyline");
+			var end_nodes = new Array();
+			var node_info_box = document.getElementById("info_box");
+			node_info_box.setAttribute("opacity", 1);
+			info_box_edge_cursor = 0;
+			edges_info = new Array();
+			var up_btn = document.getElementById("info_box_up_btn");
+			var down_btn = document.getElementById("info_box_down_btn");
+			
+			//move connector
+			var connector_box = document.getElementById("info_box_connector_box");
+			var connector_box_end = document.getElementById("info_box_connector_box_end");
+			var connector_arrow = document.getElementById("info_box_connector_arrow");
+			var info_box_bg = document.getElementById("info_box_bg");
+			var info_box_bg_x = parseFloat(info_box_bg.getAttribute("x"));
+			var info_box_bg_y = parseFloat(info_box_bg.getAttribute("y"));
+			var info_box_bg_width = parseFloat(info_box_bg.getAttribute("width"));
+			var info_box_bg_height = parseFloat(info_box_bg.getAttribute("height"));
+			var node_x = parseFloat(node.getAttribute("cx"));
+			var node_y = parseFloat(node.getAttribute("cy"));
+			var new_x = 0;
+			var new_y = 0;
+			if(node_x > 235) {
+				//move connector to right
+				new_x = info_box_bg_x + info_box_bg_width - 5;
+				connector_box.setAttribute("cx", new_x);
+				connector_arrow.setAttribute("x1", new_x);
+			}else {
+				//move connector to left
+				new_x = info_box_bg_x + 5;
+				connector_box.setAttribute("cx", new_x);
+				connector_arrow.setAttribute("x1", new_x);
+			}
+			if(node_y > 235) {
+				//move connector to bottom
+				new_y = info_box_bg_y + info_box_bg_height - 5;
+				connector_box.setAttribute("cy", new_y);
+				connector_arrow.setAttribute("y1", new_y);
+			}else {
+				//move connector to top
+				new_y = info_box_bg_y + 5;
+				connector_box.setAttribute("cy", new_y);
+				connector_arrow.setAttribute("y1", new_y);
+			}
+			var new_r = parseFloat(node.getAttribute("r"))+ 5;
+			connector_box_end.setAttribute("r", new_r);
+			connector_box_end.setAttribute("cx", node_x);
+			connector_box_end.setAttribute("cy", node_y);
+			
+			var x_diff = node_x - new_x;
+			var y_diff = node_y - new_y;
+			var diff_length = Math.sqrt((x_diff * x_diff) + (y_diff * y_diff));
+			var highlight_x = node_x - (new_r * (x_diff / diff_length));
+			var highlight_y = node_y - (new_r * (y_diff / diff_length));
+			connector_arrow.setAttribute("x2", highlight_x);
+			connector_arrow.setAttribute("y2", highlight_y);
+
+
+			if(current_node === node) {
+				//close info box
+				var trans = "translate(470, 0)";
+				node_info_box.setAttribute("transform", trans);
+				current_node = null;
+			}else {
+				if(current_node === null) {
+					//show info box
+					var trans = "translate(0, 0)";
+					node_info_box.setAttribute("transform", trans);
+				}
+				
+				current_node = node;
+				
+				//move connector
+				
+				
+				for(var k = 0; k < edges.length; ++k) {
+					var node_edges = edges[k].getAttribute("desc");
+					var node_edges_vals = node_edges.split(" ");
+						
+					if(node_edges_vals[2] == node_id_vals[0]) {
+						if(node_edges_vals[3] == node_id_vals[1]) {
+							var end_node = new Array();
+							end_node[0] = node_edges_vals[0];
+							end_node[1] = node_edges_vals[1];
+							var id = end_node[0] + " " + end_node[1];
+							var act_node = document.getElementById(id);
+							var act_node_name = act_node.getAttribute("desc");
+							end_node[2] = act_node_name;
+							end_node[3] = node_edges_vals[4];
+							var linestyle = edges[k].getAttribute("style");
+							var linestyle_attr = linestyle.split(";");
+							var stroke_width = linestyle_attr[4];
+							var stroke_width_vals = stroke_width.split(": ");
+							var edge_weight = stroke_width_vals[1];
+							end_node[4] = edge_weight;
+							end_nodes.push(end_node);
+						}
+					}else if(node_edges_vals[0] == node_id_vals[0]) {
+						if(node_edges_vals[1] == node_id_vals[1]) {
+							var end_node = new Array();
+							end_node[0] = node_edges_vals[2];
+							end_node[1] = node_edges_vals[3];
+							var id = end_node[0] + " " + end_node[1];
+							var act_node = document.getElementById(id);
+							var act_node_name = act_node.getAttribute("desc");
+							end_node[2] = act_node_name;
+							end_node[3] = node_edges_vals[4];
+							var linestyle = edges[k].getAttribute("style");
+							var linestyle_attr = linestyle.split(";");
+							var stroke_width = linestyle_attr[4];
+							var stroke_width_vals = stroke_width.split(": ");
+							var edge_weight = stroke_width_vals[1];
+							end_node[4] = edge_weight;
+							end_nodes.push(end_node);
+						}
+					}
+				}
+				
+				//add text to info box
+				var info_name_txt = document.getElementById("info_box_name_txt").firstChild;
+				var info_end_node_txt = document.getElementById("info_box_end_node_txt").firstChild;
+				var info_edge_type_txt = document.getElementById("info_box_edge_type_txt").firstChild;
+				var info_edge_weight_txt = document.getElementById("info_box_edge_weight_txt").firstChild;
+				var info_fraction = document.getElementById("info_box_fraction_txt");
+				var info_fraction_txt = info_fraction.firstChild;
+				info_name_txt.nodeValue = node_name;
+					
+				if(end_nodes.length > 0) {
+					if(end_nodes.length > 1) {
+						up_btn.setAttribute("visibility", "visible");
+						down_btn.setAttribute("visibility", "visible");
+						info_fraction.setAttribute("visibility", "visible");
+					}else {
+						up_btn.setAttribute("visibility", "hidden");
+						down_btn.setAttribute("visibility", "hidden");
+						info_fraction.setAttribute("visibility", "hidden");
+					}
+					info_end_node_txt.nodeValue = ". . . . . Edge to: " + end_nodes[0][2];
+					info_edge_type_txt.nodeValue = ". . . . . Type: " + end_nodes[0][3];
+					info_edge_weight_txt.nodeValue = ". . . . . Weight: " + end_nodes[0][4];
+						
+					for(var l = 0; l < end_nodes.length; ++l) {
+						var edge_info = new Array();
+						edge_info[0] = end_nodes[l][2];
+						edge_info[1] = end_nodes[l][3];
+						edge_info[2] = end_nodes[l][4];
+						edges_info.push(edge_info);
+					}
+					
+					info_fraction_txt.nodeValue = (info_box_edge_cursor + 1) + " / " + edges_info.length;
+				}else {
+					info_end_node_txt.nodeValue = ". . . . . no edges"
+					info_edge_type_txt.nodeValue = "";
+					info_edge_weight_txt.nodeValue = "";
+					up_btn.setAttribute("visibility", "hidden");
+					down_btn.setAttribute("visibility", "hidden");
+					info_fraction.setAttribute("visibility", "hidden");
+				}
+			}
+		}
+		
+		function legend_onmouseover(evt) {
+			var leg = document.getElementById("legend");
+			var leg_runner = document.getElementById("legend_runner");
+			var leg_tab = document.getElementById("legend_tab");
+			var leg_tab_text = document.getElementById("legend_tab_text");
+			leg_tab_text.setAttribute("fill", "rgb(0, 0, 0)");
+			leg_runner.setAttribute("fill", "rgb(200, 200, 200)");
+			leg_tab.setAttribute("fill", "rgb(200, 200, 200)");
+			leg.setAttribute("opacity", 1);
+		}
+		function legend_onmouseout(evt) {
+			var leg_runner = document.getElementById("legend_runner");
+			var leg_tab = document.getElementById("legend_tab");
+			var leg_tab_text = document.getElementById("legend_tab_text");
+			leg_tab_text.setAttribute("fill", "rgb(255, 255, 255)");
+			leg_runner.setAttribute("fill", "rgb(100, 100, 100)");
+			leg_tab.setAttribute("fill", "rgb(100, 100, 100)");
+			if(legend_open) {
+				var leg = document.getElementById("legend");
+				leg.setAttribute("opacity", .1);
+			}
+		}
+		function legend_click(evt) {
+			var leg_up_btn = document.getElementById("legend_up_btn");
+			var leg_down_btn = document.getElementById("legend_down_btn");
+			var targ = evt.target;
+			if(targ === leg_up_btn || targ === leg_down_btn) {
+				
+			}else {
+				var leg = document.getElementById("legend");
+				var trans_distance = 0;
+				var leg_tab = document.getElementById("legend_tab");
+				var leg_tab_text = document.getElementById("legend_tab_text");
+				var leg_items = document.getElementById("legend_items");
+				
+				if(legend_open) {
+						trans_distance = 0;
+						legend_open = false;
+						leg_tab.setAttribute("transform", "translate(0, 0)");
+						leg_tab_text.setAttribute("transform", "translate(0, 0)");
+						leg_items.setAttribute("transform", "translate(0, 0)");
+				}else {
+					var leg_runner = document.getElementById("legend_runner");
+					var h = leg_runner.getAttribute("height");
+					if(h >= 470) {
+						trans_distance = -470;
+						leg_tab.setAttribute("transform", "translate(0, 18)");
+						leg_tab_text.setAttribute("transform", "translate(0, 15)");
+					}else {
+						trans_distance = -h;
+					}
+					legend_open = true;
+				}
+				var trans = "translate(0, " + trans_distance + ")";
+				leg.setAttribute("transform", trans);
+			}
+		}
+		function legend_btn_onmouseover(evt) {
+			var btn = evt.target;
+			btn.setAttribute("fill", "rgb(200, 200, 200)");
+		}
+		function legend_btn_onmouseout(evt) {
+			var btn = evt.target;
+			btn.setAttribute("fill", "rgb(100, 100, 100)");
+		}
+		function legend_up_btn_click(evt) {
+			if(legend_items_position > 0) {
+				legend_items_position--;
+				var leg_items = document.getElementById("legend_items");
+				var trans_distance = -(legend_items_position * 20);
+				var trans = "translate(0, " + trans_distance + ")";
+				leg_items.setAttribute("transform", trans);
+			}
+		}
+		function legend_down_btn_click(evt) {
+			var leg_runner = document.getElementById("legend_runner");
+			var h = leg_runner.getAttribute("height");
+			var critical_pos = (h - 470) / 20;
+			if(legend_items_position < critical_pos) {
+				legend_items_position++;
+				var leg_items = document.getElementById("legend_items");
+				var trans_distance = -(legend_items_position * 20);
+				var trans = "translate(0, " + trans_distance + ")";
+				leg_items.setAttribute("transform", trans);
+			}
+		}
+		function info_box_onmouseover(evt) {
+			var node_info_box = document.getElementById("info_box");
+			node_info_box.setAttribute("opacity", 1);
+		}
+		function info_box_onmouseout(evt) {
+			var node_info_box = document.getElementById("info_box");
+			node_info_box.setAttribute("opacity", .1);
+		}
+		function info_box_onclick(evt) {
+			var up_btn = document.getElementById("info_box_up_btn");
+			var down_btn = document.getElementById("info_box_down_btn");
+			var targ = evt.target;
+			
+			if(targ === up_btn || targ === down_btn) {
+			
+			}else {
+				var node_info_box = document.getElementById("info_box");
+				//close info box
+				var trans = "translate(470, 0)";
+				node_info_box.setAttribute("transform", trans);
+				node_info_box.setAttribute("opacity", 1);
+				edges_info = new Array();
+				info_box_edge_cursor = 0;
+				current_node = null;
+			}
+		}
+		function info_box_btn_onclick(evt) {
+			if(edges_info.length > 0) {
+				var up_btn = document.getElementById("info_box_up_btn");
+				var down_btn = document.getElementById("info_box_down_btn");
+				var targ = evt.target;
+			
+				if(targ === up_btn) {
+					if(info_box_edge_cursor > 0) {
+						info_box_edge_cursor--;
+					}
+				}else if(targ === down_btn) {
+					if(info_box_edge_cursor < edges_info.length - 1) {
+						info_box_edge_cursor++;
+					}
+				}
+				
+				var info_end_node_txt = document.getElementById("info_box_end_node_txt").firstChild;
+				var info_edge_type_txt = document.getElementById("info_box_edge_type_txt").firstChild;
+				var info_edge_weight_txt = document.getElementById("info_box_edge_weight_txt").firstChild;
+				var info_fraction_txt = document.getElementById("info_box_fraction_txt").firstChild;
+				
+				info_end_node_txt.nodeValue = ". . . . . Edge to: " + edges_info[info_box_edge_cursor][0];
+				info_edge_type_txt.nodeValue = ". . . . . Type: " + edges_info[info_box_edge_cursor][1];
+				info_edge_weight_txt.nodeValue = ". . . . . Weight: " + edges_info[info_box_edge_cursor][2];
+				info_fraction_txt.nodeValue = (info_box_edge_cursor + 1) + " / " + edges_info.length;
+			}
+		}
+		function info_box_btn_onmouseover(evt) {
+			var btn = evt.target;
+			btn.setAttribute("fill", "rgb(255, 255, 255)");
+		}
+		function info_box_btn_onmouseout(evt) {
+			var btn = evt.target;
+			btn.setAttribute("fill", "rgb(0, 0, 0)");
+		}
+	]]></script>
+	
+	<g id = "elements">
+	<circle cx = "235" cy = "235" r = "210" fill = "url(#bg_circle_fill)" opacity = "0.5" />
+	<g id = "nodes" opacity = "1">
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(255,0,0); stroke-opacity: 1.0; stroke-width: 1" points="27.3431533629166,266.283127157348 28.101525870107,266.151610495444 30.2787532672457,265.753548613866 33.7280003676837,265.083673668816 38.3024319847723,264.136717816497 43.8552129318626,262.907413213111 50.2395080223058,261.390492014859 57.3084820694531,259.580686377945 64.9152998866555,257.47272845857 72.9131262872642,255.061350412936 81.1551260846305,252.341284397246 89.4944640921054,249.307262567701 97.7843051230401,245.954017080505 105.877813990786,242.276280091858 113.628155508694,238.268783757964 120.888494490115,233.926260235024 127.5119957484,229.24344167924 133.351824096902,224.215060246816 138.261144348969,218.835848093952 142.093121317955,213.100537376851 144.70091981721,207.003860251715 145.999381653815,200.50123910023 146.083946795215,193.604088583575 145.07867729531,186.391129277198 143.107635208,178.941081756547 140.294882587184,171.332666597068 136.764481486761,163.644604374208 132.640493960632,155.955615663414 128.046982062696,148.344421040133 123.108007846852,140.889741079813 117.947633367,133.6702963579 112.689920677039,126.764807449841 107.458931830869,120.251994931084 102.37872888239,114.210579377074 97.5733738855,108.71928136326 93.1669288940998,103.856821465089 89.2834559620886,99.7019202580069 86.0470171433658,96.3332983174612 83.5816744918312,93.8296762188989 82.011490061384,92.269774537767 81.460525905924,91.7323138495126 " id="1-27.3431533629166-266.283127157348" desc = '0 0 1 0 hyper' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,0,255); stroke-opacity: 1.0; stroke-width: 2.34574932" points="27.3431533629166,266.283127157348 28.0956815028423,266.312838512356 30.2494987343373,266.379165739526 33.6489542749781,266.447898582085 38.1383973423416,266.484826783255 43.5621771540044,266.455740086261 49.7646429275431,266.326428234327 56.5901438805345,266.062680970678 63.8830292305553,265.630288038536 71.4876481951821,264.995039181126 79.2483499919916,264.122724141672 87.0094838385606,262.979132663399 94.6153989524657,261.530054489529 101.910444551284,259.741279363288 108.738969852591,257.5785970279 114.945324073964,255.007797226588 120.373856432981,251.994669702576 124.868916147217,248.505004199089 128.274852434249,244.504590459351 130.436014511654,239.959218226585 131.196751597008,234.834677244016 130.45234158052,229.707739081485 128.305668849201,225.155505954346 124.912492365837,221.14426357409 120.428571093214,217.640297652211 115.009663994118,214.609893900199 108.811530031334,212.019338029547 101.989928167648,209.834915751746 94.7006173658451,208.022912778289 87.0993565887119,206.549614820669 79.3419047990336,205.381307590375 71.5840209595959,204.484276798902 63.9814640331845,203.824808157741 56.6899929825849,203.369187378383 49.865366770583,203.083700172321 43.6633443599642,202.934632251047 38.2396847135143,202.888269326053 33.750146794019,202.910897108831 30.350489564264,202.968801310872 28.1964719870348,203.02826764367 27.4438530251171,203.055581818715 " id="2-27.3431533629166-266.283127157348" desc = '0 0 1 4 hypo' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,255,0); stroke-opacity: 1.0; stroke-width: 1" points="34.320324235646,296.868147985161 35.0592734016838,296.593896207362 37.1795657534207,295.785605441646 40.536368571292,294.464972539534 44.9848491357328,292.653694352547 50.3801747271784,290.373467732206 56.577512626064,287.64598953003 63.4320301128249,284.492956597541 70.7988944678963,280.936065786261 78.5332729717133,276.997013947709 86.4903329047113,272.697497933406 94.5252415473255,268.059214594873 102.493166179991,263.103860783632 110.249274083143,257.853133351202 117.648732537217,252.328729149104 124.546708822648,246.552345028861 130.798370219872,240.545677841991 136.258884009322,234.330424440016 140.783417471436,227.928281674456 144.227137886648,221.360946396834 146.445212535393,214.650115458668 147.3792427659,207.644211194654 147.147939501331,200.232355708566 145.872134384513,192.497295505549 143.672659058275,184.521777090749 140.670345165447,176.38854696931 136.986024348857,168.180351646377 132.740528251336,159.979937627094 128.05468851571,151.870051416607 123.049336784811,143.933439520061 117.845304701466,136.252848442599 112.563423908505,128.911024689367 107.324526048757,121.99071476551 102.249442765051,115.574665176172 97.4590057002164,109.745622426499 93.0740464970814,104.586333021634 89.2153967984755,100.179543466723 86.0038882472278,96.6080002669106 83.5603524861673,93.9544499273416 82.005621158123,92.3016389531606 81.460525905924,91.7323138495126 " id="3-34.320324235646-296.868147985161" desc = '0 1 1 0 super' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(255,0,0); stroke-opacity: 1.0; stroke-width: 3" points="27.3431533629166,266.283127157348 28.0885110760238,266.266432200209 30.2232574534983,266.199288840699 33.5954023525699,266.056109346679 38.0529556304682,265.811305986011 43.4439271444228,265.439291026555 49.6163267516634,264.914476736174 56.4181643094197,264.211275382728 63.6974496749212,263.304099234078 71.3021927053977,262.167360558086 79.0804032580787,260.775471622613 86.880091190194,259.102844695521 94.5492663589732,257.123892044669 101.935938621646,254.813025937921 108.888117835442,252.144658643136 115.253813857591,249.093202428177 120.881036545322,245.633069560904 125.617795755865,241.738672309178 129.31210134645,237.384422940862 131.811963174307,232.544733723816 132.965391096664,227.194016925901 132.639317189923,221.730113373411 130.904742748292,216.56647585879 127.915781455708,211.70093459912 123.826546996113,207.131319811485 118.791153053445,202.855461712969 112.963713311646,198.871190520655 106.498341454653,195.176336451626 99.5491511664068,191.768729722966 92.2702561308473,188.64620055176 84.8157700319139,185.806579155089 77.3398065535463,183.247695750038 69.996479379684,180.967380553691 62.9399021942669,178.96346378313 56.3241886812345,177.23377565544 50.3034525245265,175.776146387704 45.0318074080825,174.588406197005 40.6633670158423,173.668385300427 37.3522450317454,173.013913915054 35.2525551397315,172.622822257968 34.5184110237402,172.492940546255 " id="4-27.3431533629166-266.283127157348" desc = '0 0 1 3 hyper' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,255,0); stroke-opacity: 1.0; stroke-width: 2" points="388.767455062375,378.022969356815 387.991350099909,377.37762580068 385.739348894849,375.512775885207 382.125921970705,372.535190739798 377.265539850988,368.551641493851 371.272673059206,363.668899276766 364.261792118871,357.993735217942 356.347367553491,351.632920446781 347.643869886578,344.69322609268 338.26576964164,337.281423285041 328.327537342187,329.504283153263 317.943643511729,321.468576826745 307.228558673777,313.281075434888 296.29675335184,305.04855010709 285.262698069428,296.877771972752 274.24086335005,288.875512161274 263.345719717217,281.148541802055 252.691737694439,273.803632024496 242.393387805225,266.947553957994 232.565140573085,260.687078731952 223.321466521529,255.128977475767 213.908453734535,249.862746392982 203.595547363039,244.437623732183 192.532253530985,238.899993690345 180.868078362319,233.296240464439 168.752527980985,227.672748251438 156.335108510931,222.075901248314 143.765326076099,216.55208365204 131.192686800437,211.147679659587 118.766696807889,205.90907346793 106.6368622224,200.882649274039 94.9526891679157,196.114791274888 83.8636837683816,191.651883667449 73.5193521477427,187.540310648694 64.0692004299443,183.826456415596 55.6627347389317,180.556705165127 48.4494611986502,177.777441094259 42.578885933045,175.535048399966 38.2005150660614,173.875911279219 35.4638547216448,172.846413928991 34.5184110237402,172.492940546255 " id="5-388.767455062375-378.022969356815" desc = '0 15 1 3 super' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(255,0,0); stroke-opacity: 1.0; stroke-width: 1" points="188.130869746025,439.70291797929 188.2392489117,438.760180104303 188.539868152355,436.030782816171 188.995950083436,431.662950620134 189.570717320386,425.804908021435 190.227392478651,418.604879525315 190.929198173676,410.211089637015 191.639357020906,400.771762861777 192.321091635786,390.435123704842 192.937624633761,379.349396671452 193.452178630275,367.662806266849 193.827976240774,355.523576996273 194.028240080702,343.079933364967 194.016192765505,330.480099878172 193.755056910627,317.872301041129 193.208055131514,305.404761359081 192.33841004361,293.225705337268 191.109344262361,281.483357480932 189.48408040321,270.325942295314 187.425841081604,259.901684285657 184.897848912987,250.358807957201 181.643375553609,241.038634344124 177.505896961891,231.251766864691 172.598942206542,221.10035360027 167.036040356266,210.686542632231 160.930720479769,200.112482041946 154.396511645758,189.480319910783 147.546942922938,178.892204320112 140.495543380016,168.450283351303 133.355842085697,158.256705085727 126.241368108687,148.413617604753 119.265650517693,139.023168989751 112.54221838142,130.187507322091 106.184600768574,122.008780683143 100.306326747862,114.589137154277 95.0209253879894,108.030724816863 90.4419257576618,102.43569175227 86.6828569255855,97.9061860418684 83.8572479604664,94.5443557670284 82.0786279310106,92.4523490091199 81.460525905924,91.7323138495126 " id="6-188.130869746025-439.70291797929" desc = '0 8 1 0 hyper' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,255,0); stroke-opacity: 1.0; stroke-width: 1" points="281.543050111815,439.777304617209 281.241959417178,438.840039502213 280.360917262818,436.129098828711 278.933268543057,431.795764603931 276.992358152216,425.9913188351 274.57153098462,418.867043529447 271.704131934589,410.574220694198 268.423505896448,401.264132336584 264.762997764518,391.08806046383 260.755952433123,380.197287083166 256.435714796584,368.743094201818 251.835629749225,356.876763827016 246.989042185367,344.749577965986 241.929296999335,332.512818625957 236.689739085449,320.317767814156 231.303713338033,308.315707537812 225.804564651409,296.657919804153 220.225637919901,285.495686620405 214.60027803783,274.980289993798 208.961829899519,265.263011931559 203.343638399291,256.495134440916 197.266429655852,248.038936399666 190.314242511112,239.213706416726 182.615390944195,230.106241095998 174.298188934225,220.80333704139 165.490950460327,211.391790856806 156.321989501626,201.958399146152 146.919620037248,192.589958513332 137.412156046315,183.373265562252 127.927911507954,174.395116896816 118.595200401288,165.74230912093 109.542336705444,157.5016388385 100.897634399544,149.75990265343 92.789407462715,142.603897169625 85.3459698740805,136.120418990991 78.6956356127655,130.396264721432 72.9667186578947,125.518230964855 68.287532988593,121.573114325163 64.7863925839849,118.647711406263 62.5916114231953,116.828818812059 61.8315034853488,116.203233146456 " id="7-281.543050111815-439.777304617209" desc = '0 11 1 1 super' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,0,255); stroke-opacity: 1.0; stroke-width: 1" points="435.580886761522,297.187682590378 434.603117037427,296.884318038948 431.770098300576,296.005318223481 427.232266204117,294.597323902215 421.140056401202,292.706975833384 413.643904544978,290.380914775226 404.894246288595,287.665781485976 395.041517285204,284.608216723872 384.236153187953,281.254861247148 372.628589649992,277.652355814041 360.369262324471,273.847341182788 347.608606864538,269.886458111624 334.497058923344,265.816347358786 321.185054154038,261.68364968251 307.823028209769,257.535005841033 294.561416743687,253.417056592589 281.550655408942,249.376442695417 268.941179858683,245.459804907751 256.883425746059,241.713783987829 245.52782872422,238.185020693886 235.024824446315,234.920155784158 224.522180122883,231.654133133301 213.167613315566,228.1220563044 201.111485204175,224.37080558834 188.504156968523,220.447261276004 175.495989788417,216.398303658276 162.23734484367,212.27081302604 148.878583314092,208.111669670179 135.570066379493,203.967753881578 122.462155219684,199.885945951119 109.705211014476,195.913126169687 97.4495949436786,192.096174828165 85.8456681871028,188.481972217438 75.0437919245592,185.117398628388 65.1943273358583,182.0493343519 56.4476356008106,179.324659678857 48.9540778992268,176.990254900144 42.8640154109172,175.093000306643 38.3278093156926,173.679776189239 35.4958207933634,172.797462838815 34.5184110237402,172.492940546255 " id="8-435.580886761522-297.187682590378" desc = '0 18 1 3 hypo' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,0,255); stroke-opacity: 1.0; stroke-width: 1" points="103.992443965016,399.125014125637 104.455990857615,398.375143059504 105.780553662498,396.199760252854 107.867015570294,392.710211293309 110.616259771631,388.017841768491 113.929169457139,382.233997266021 117.706627817445,375.470023373521 121.84951804318,367.837265678615 126.25872332497,359.447069768923 130.835126853447,350.410781232068 135.479611819237,340.839745655672 140.09306141297,330.845308627357 144.576358825274,320.538815734745 148.830387246779,310.031612565457 152.756029868112,299.435044707116 156.254169879904,288.860457747344 159.225690472782,278.419197273763 161.571474837375,268.222608873995 163.192406164313,258.382038135661 163.989367644223,249.008830646385 163.863242467735,240.214331993787 162.705634307029,231.4954411551 160.55042034935,222.338628443566 157.511894057924,212.839596450825 153.704348895977,203.09404776852 149.242078326733,193.197684988289 144.239375813419,183.246210701775 138.81053481926,173.335327500617 133.069848807481,163.560737976457 127.131611241309,154.018144720934 121.110115583968,144.80325032569 115.119655298685,136.011757382365 109.274523848684,127.7393684826 103.689014697192,120.081786218035 98.4774213074331,113.134713180312 93.754037142634,106.993851961071 89.6331556660199,101.754905151951 86.2290703408162,97.5135753445954 83.6560746302487,94.3655651306432 82.0284619975428,92.4065771017354 81.460525905924,91.7323138495126 " id="9-103.992443965016-399.125014125637" desc = '0 5 1 0 hypo' opacity = '1' />
+<polyline style="fill: none; fill-opacity: 1.0; stroke: rgb(0,0,255); stroke-opacity: 1.0; stroke-width: 4" points="444.999733662783,235.334457112462 443.977867278987,235.313097857291 441.01719324156,235.249181541615 436.275099221445,235.142950340187 429.908972889586,234.994646427762 422.076201916925,234.804511979093 412.934173974404,234.572789168937 402.640276732968,234.299720172045 391.351897863559,233.985547163174 379.22642503712,233.630512317076 366.421245924593,233.234857808507 353.093748196922,232.79882581222 339.40131952505,232.322658502969 325.501347579919,231.80659805551 311.551220032473,231.250886644595 297.708324553654,230.655766444981 284.130048814406,230.021479631419 270.973780485671,229.348268378666 258.396907238392,228.636374861474 246.556816743513,227.886041254599 235.610896671975,227.097509732794 224.673834602181,226.194392102115 212.859096319189,225.116105149151 200.322236803924,223.886598519457 187.218811037315,222.529821858591 173.704374000288,221.069724812106 159.93448067377,219.53025702556 146.064686038689,217.935368144508 132.250545075971,216.309007814507 118.647612766543,214.675125681111 105.411444091332,213.057671389876 92.697594031266,211.48059458636 80.6616175672709,209.967844916116 69.4590696802741,208.543372024702 59.2455053512027,207.231125557673 50.1764795609835,206.055055160586 42.4075472905436,205.039110478994 36.09426352081,204.207241158456 31.3921832327097,203.583396844526 28.4568614071698,203.19152718276 27.4438530251171,203.055581818715 " id="10-444.999733662783-235.334457112462" desc = '0 20 1 4 hypo' opacity = '1' />
+<circle 
+				id = '0 0' 
+				desc = '1' 
+				cx = '27.3431533629166' 
+				cy = '266.283127157348' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 1' 
+				desc = '2' 
+				cx = '34.320324235646' 
+				cy = '296.868147985161' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 2' 
+				desc = '3' 
+				cx = '45.7758118430064' 
+				cy = '326.072534917651' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 3' 
+				desc = '4' 
+				cx = '61.4539784296547' 
+				cy = '353.244570264792' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 4' 
+				desc = '5' 
+				cx = '81.0049540073825' 
+				cy = '377.777889778956' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 5' 
+				desc = '1' 
+				cx = '103.992443965016' 
+				cy = '399.125014125637' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 6' 
+				desc = '2' 
+				cx = '129.903465308277' 
+				cy = '416.809566293392' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 7' 
+				desc = '3' 
+				cx = '158.159794258145' 
+				cy = '430.436902302378' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 8' 
+				desc = '4' 
+				cx = '188.130869746025' 
+				cy = '439.70291797929' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 9' 
+				desc = '5' 
+				cx = '219.147864854587' 
+				cy = '444.400835268944' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 10' 
+				desc = '1' 
+				cx = '250.518612189581' 
+				cy = '444.425816640904' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 11' 
+				desc = '2' 
+				cx = '281.543050111815' 
+				cy = '439.777304617209' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 12' 
+				desc = '3' 
+				cx = '311.528845135097' 
+				cy = '430.559034212916' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 13' 
+				desc = '4' 
+				cx = '339.80684186468' 
+				cy = '416.976718011816' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 14' 
+				desc = '5' 
+				cx = '365.745995699293' 
+				cy = '399.333455536602' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 15' 
+				desc = '1' 
+				cx = '388.767455062375' 
+				cy = '378.022969356815' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 16' 
+				desc = '2' 
+				cx = '408.357478907015' 
+				cy = '353.520818875858' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 17' 
+				desc = '3' 
+				cx = '424.078901230818' 
+				cy = '326.373787868001' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 18' 
+				desc = '4' 
+				cx = '435.580886761522' 
+				cy = '297.187682590378' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 19' 
+				desc = '5' 
+				cx = '442.60676010792' 
+				cy = '266.613812764245' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 20' 
+				desc = '1' 
+				cx = '444.999733662783' 
+				cy = '235.334457112462' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 21' 
+				desc = '2' 
+				cx = '442.706406435327' 
+				cy = '204.047637800605' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 22' 
+				desc = '3' 
+				cx = '435.777955734174' 
+				cy = '173.451543551393' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 23' 
+				desc = '4' 
+				cx = '424.368995107515' 
+				cy = '144.228949042275' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 24' 
+				desc = '5' 
+				cx = '408.734124026396' 
+				cy = '117.031978278939' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 25' 
+				desc = '1' 
+				cx = '389.222246307508' 
+				cy = '92.4675519614343' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 26' 
+				desc = '2' 
+				cx = '366.268784064124' 
+				cy = '71.0838435957993' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 27' 
+				desc = '3' 
+				cx = '340.385960936685' 
+				cy = '53.358046593163' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 28' 
+				desc = '4' 
+				cx = '312.151371439979' 
+				cy = '39.6857253426407' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 29' 
+				desc = '5' 
+				cx = '282.195091510481' 
+				cy = '30.3719878967756' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 30' 
+				desc = '1' 
+				cx = '251.185617891593' 
+				cy = '25.6246772576401' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 31' 
+				desc = '2' 
+				cx = '219.814950129909' 
+				cy = '25.5497332051285' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 32' 
+				desc = '3' 
+				cx = '188.783148088883' 
+				cy = '30.1488281717044' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 33' 
+				desc = '4' 
+				cx = '158.782709590515' 
+				cy = '39.3193299208219' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '0 34' 
+				desc = '5' 
+				cx = '130.483116809626' 
+				cy = '52.8565918618804' 
+				r = '10' 
+				fill = 'rgb(255,0,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '1 0' 
+				desc = '6' 
+				cx = '81.4605259059244' 
+				cy = '91.7323138495122' 
+				r = '5' 
+				fill = 'rgb(0,255,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '1 1' 
+				desc = '7' 
+				cx = '61.8315034853491' 
+				cy = '116.203233146456' 
+				r = '5' 
+				fill = 'rgb(0,255,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '1 2' 
+				desc = '8' 
+				cx = '46.0668653024835' 
+				cy = '143.325190955366' 
+				r = '5' 
+				fill = 'rgb(0,255,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '1 3' 
+				desc = '9' 
+				cx = '34.5184110237404' 
+				cy = '172.492940546254' 
+				r = '5' 
+				fill = 'rgb(0,255,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+<circle 
+				id = '1 4' 
+				desc = '0' 
+				cx = '27.4438530251172' 
+				cy = '203.055581818714' 
+				r = '5' 
+				fill = 'rgb(0,255,0)' 
+				stroke = 'rgb(0,0,0)' 
+				stroke-width = '1'
+				opacity = '1' 
+				cursor = 'pointer'
+				onmouseover = 'node_onmouseover(evt)'
+				onmouseout  = 'node_onmouseout(evt)'
+				onclick = 'node_onmouseclick(evt)'
+				/>
+</g>
+</g>
+<g id = 'info_box' transform = 'translate(470, 0)' opacity = '1'
+			 onmouseover = 'info_box_onmouseover(evt)'
+			 onmouseout = 'info_box_onmouseout(evt)'
+			 onclick = 'info_box_onclick(evt)'>
+	<rect
+					id = 'info_box_bg' 
+					x = '78.3333333333333' 
+					y = '156.666666666667'
+					rx = '20'
+					ry = '20'
+					width = '313.333333333333' 
+					height = '156.666666666667' 
+					fill = 'rgb(100, 100, 100)' 
+				/>
+	<text
+					id = 'info_box_name_txt'
+					x = '103.333333333333'
+					y = '178.666666666667'
+					font-family = 'Arial'
+					font-size = '20'
+					fill = 'rgb(255, 255, 255)'
+				>
+				NODE NAME
+				</text>
+	<text
+					id = 'info_box_end_node_txt'
+					x = '103.333333333333'
+					y = '200.666666666667'
+					font-family = 'Arial'
+					font-size = '12'
+					fill = 'rgb(255, 255, 255)'
+				>
+				END NODE
+				</text>
+	<text
+					id = 'info_box_edge_type_txt'
+					x = '103.333333333333'
+					y = '243.888888888889'
+					font-family = 'Arial'
+					font-size = '12'
+					fill = 'rgb(255, 255, 255)'
+				>
+				EDGE TYPE
+				</text>
+	<text
+					id = 'info_box_edge_weight_txt'
+					x = '103.333333333333'
+					y = '287.111111111111'
+					font-family = 'Arial'
+					font-size = '12'
+					fill = 'rgb(255, 255, 255)'
+				>
+				EDGE WEIGHT
+				</text>
+	<text
+					id = 'info_box_fraction_txt'
+					x = '312.222222222222'
+					y = '287.111111111111'
+					font-family = 'Arial'
+					font-size = '14'
+					fill = 'rgb(255, 255, 255)'
+				>
+				EDGE_CURSOR / NUM_EDGES
+				</text>
+	<rect
+					id = 'info_box_up_btn'
+					x = '83.3333333333333'
+					y = '215'
+					width = '10'
+					height = '10'
+					cursor = 'pointer'
+					onclick = 'info_box_btn_onclick(evt)'
+					onmouseover = 'info_box_btn_onmouseover(evt)'
+					onmouseout = 'info_box_btn_onmouseout(evt)'
+					fill = 'rgb(0, 0, 0)'
+				/>
+	<rect
+					id = 'info_box_down_btn'
+					x = '83.3333333333333'
+					y = '245'
+					width = '10'
+					height = '10'
+					cursor = 'pointer'
+					onclick = 'info_box_btn_onclick(evt)'
+					onmouseover = 'info_box_btn_onmouseover(evt)'
+					onmouseout = 'info_box_btn_onmouseout(evt)'
+					fill = 'rgb(0, 0, 0)'
+				/>
+	<line 
+					id = 'info_box_connector_arrow'
+					x1 = '83.3333333333333' 
+					x2 = '0' 
+					y1 = '161.666666666667' 
+					y2 = '30' 
+					stroke = 'rgb(100, 100, 100)' 
+					stroke-width = '5' 					
+				/>
+	<circle
+					id = 'info_box_connector_box'
+					cx = '83.3333333333333'
+					cy = '161.666666666667'
+					r = '10'
+					fill = 'rgb(255, 255, 255)'
+					stroke = 'rgb(100, 100, 100)'
+					stroke-width = '2'
+				/>
+	<circle
+					id = 'info_box_connector_box_end'
+					cx = '83.3333333333333'
+					cy = '161.666666666667'
+					r = '10'
+					fill = 'none'
+					stroke = 'rgb(100, 100, 100)'
+					stroke-width = '2'
+				/>
+</g>
+<g id = 'legend' opacity = '1' onclick = 'legend_click(evt)'
+							 onmouseover = 'legend_onmouseover(evt)'
+							 onmouseout = 'legend_onmouseout(evt)'>
+	<rect 
+					id = 'legend_runner'
+					x = '0' 
+					y = '467' 
+					width = '470' 
+					height = '70' 
+					fill = 'rgb(100, 100, 100)'
+					cursor = 'pointer'
+				/>
+	<rect
+					id = 'legend_bg'
+					x = '5'
+					y = '470'
+					width = '460'
+					height = '65'
+					fill = 'rgb(255, 255, 255)'
+				/>
+	<rect
+					id = 'legend_tab'
+					x = '420'
+					y = '452'
+					width = '50'
+					height = '15'
+					fill = 'rgb(100, 100, 100)'
+					cursor = 'pointer'
+				/>
+	<text
+					id = 'legend_tab_text'
+					x = '425'
+					y = '467'
+					font-family = 'Arial'
+					font-size = '12'
+					fill = 'rgb(255, 255, 255)'
+					cursor = 'pointer'
+				>
+				Legend
+				</text>
+<g id = 'legend_items'>
+<line
+				x1 = '10'
+				x2 = '100'
+				y1 = '477'
+				y2 = '477'
+				stroke = 'rgb(255, 0, 0)'
+			/>
+<text
+				x = '115'
+				y = '482'
+				font-family = 'Arial'
+				font-size = '12'
+				fill = 'rgb(0, 0, 0)'
+			>
+			hyper
+			</text>
+<line
+				x1 = '10'
+				x2 = '100'
+				y1 = '497'
+				y2 = '497'
+				stroke = 'rgb(0, 0, 255)'
+			/>
+<text
+				x = '115'
+				y = '502'
+				font-family = 'Arial'
+				font-size = '12'
+				fill = 'rgb(0, 0, 0)'
+			>
+			hypo
+			</text>
+<line
+				x1 = '10'
+				x2 = '100'
+				y1 = '517'
+				y2 = '517'
+				stroke = 'rgb(0, 255, 0)'
+			/>
+<text
+				x = '115'
+				y = '522'
+				font-family = 'Arial'
+				font-size = '12'
+				fill = 'rgb(0, 0, 0)'
+			>
+			super
+			</text>
+</g>
+</g>
+</svg>
